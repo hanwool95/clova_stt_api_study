@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import * as fs from 'fs';
-import { AxiosResponse } from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import { HttpService } from '@nestjs/axios';
-import * as path from 'path';
+import Ffmpeg from 'fluent-ffmpeg';
+import ffmpegPath from 'ffmpeg-static';
 
 @Injectable()
 export class AppService {
@@ -11,15 +11,14 @@ export class AppService {
 
   constructor(private httpService: HttpService) {}
 
-  async stt(): Promise<AxiosResponse<{ text: string }>> {
+  async stt(data): Promise<AxiosResponse<{ text: string }>> {
+    console.log('get stt');
     const url = 'https://naveropenapi.apigw.ntruss.com/recog/v1/stt?lang=Kor';
     const headers = {
       'Content-Type': 'application/octet-stream',
       'X-NCP-APIGW-API-KEY-ID': this.clientId,
       'X-NCP-APIGW-API-KEY': this.clientSecret,
     };
-    const filePath = path.join(__dirname, '..', 'public', 'test.mp3');
-    const data = fs.createReadStream(filePath);
 
     try {
       const response = await this.httpService
@@ -30,4 +29,18 @@ export class AppService {
       throw new Error(`Error in STT Service: ${error.message}`);
     }
   }
+
+  convertVideoStreamToAudio = async (url, format) => {
+    const response = await axios({
+      method: 'GET',
+      url: url,
+      responseType: 'stream',
+    });
+
+    return Ffmpeg()
+      .setFfmpegPath(ffmpegPath)
+      .input(response.data)
+      .toFormat(format)
+      .pipe();
+  };
 }

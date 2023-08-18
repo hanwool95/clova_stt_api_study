@@ -30,16 +30,19 @@ export class AppService {
     }
   }
 
-  convertVideoStreamToAudio = async (url, format) => {
+  getVideoStream = async (url: string) => {
     const response = await axios({
       method: 'GET',
       url: url,
       responseType: 'stream',
     });
+    return response.data;
+  };
 
+  convertVideoStreamToAudio = async (streamData, format) => {
     return Ffmpeg()
       .setFfmpegPath(ffmpegPath)
-      .input(response.data)
+      .input(streamData)
       .toFormat(format)
       .pipe();
   };

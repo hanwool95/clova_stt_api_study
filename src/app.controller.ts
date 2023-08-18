@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Post } from '@nestjs/common';
 import { AppService } from './app.service';
 import { AxiosResponse } from 'axios';
 import path from 'path';
@@ -17,8 +17,12 @@ export class AppController {
 
   @Get('video')
   async getVideoScript(): Promise<AxiosResponse<{ text: string }>> {
-    const audioStream = await this.appService.convertVideoStreamToAudio(
+    const videoStream = await this.appService.getVideoStream(
       process.env.TEST_VIDEO_URL,
+    );
+
+    const audioStream = await this.appService.convertVideoStreamToAudio(
+      videoStream,
       'mp3',
     );
     return this.appService.stt(audioStream);

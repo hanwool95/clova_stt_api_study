@@ -3,6 +3,7 @@ import axios, { AxiosResponse } from 'axios';
 import { HttpService } from '@nestjs/axios';
 import Ffmpeg from 'fluent-ffmpeg';
 import ffmpegPath from 'ffmpeg-static';
+import * as stream from 'stream';
 
 @Injectable()
 export class AppService {
@@ -36,10 +37,25 @@ export class AppService {
       url: url,
       responseType: 'stream',
     });
-    return response.data;
+    return response.data as stream.Readable;
   };
 
-  convertVideoStreamToAudio = async (streamData, format) => {
+  convertVideoStreamToDividedAudio = async (
+    streamData: stream.Readable,
+    format: string,
+  ) => {
+    return Ffmpeg()
+      .setFfmpegPath(ffmpegPath)
+      .input(streamData)
+      .toFormat(format)
+      .outputOptions(['-f segment', '-segment_time 10', '-c copy'])
+      .pipe();
+  };
+
+  convertVideoStreamToAudio = async (
+    streamData: stream.Readable,
+    format: string,
+  ) => {
     return Ffmpeg()
       .setFfmpegPath(ffmpegPath)
       .input(streamData)

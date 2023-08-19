@@ -27,4 +27,19 @@ export class AppController {
     );
     return this.appService.stt(audioStream);
   }
+
+  @Get('divideVideo')
+  async getVideoScriptWithDivided() {
+    console.log('get videoStream');
+    const videoStream = await this.appService.getVideoStream(
+      process.env.TEST_VIDEO_URL,
+    );
+    console.log('divide VideoStream');
+    const videoStreams = await this.appService.convertVideoStreamToDividedAudio(
+      videoStream,
+      'mp3',
+    );
+    console.log(videoStreams);
+    return { text: 'test' };
+  }
 }

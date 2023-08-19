@@ -12,7 +12,7 @@ export class AppController {
   getStt(): Promise<AxiosResponse<{ text: string }>> {
     const filePath = path.join(__dirname, '..', 'public', 'test.mp3');
     const data = fs.createReadStream(filePath);
-    return this.appService.stt(data);
+    return this.appService.naverStt(data);
   }
 
   @Get('video')
@@ -25,7 +25,7 @@ export class AppController {
       videoStream,
       'mp3',
     );
-    return this.appService.stt(audioStream);
+    return this.appService.naverStt(audioStream);
   }
 
   @Get('divideVideo')
@@ -41,5 +41,10 @@ export class AppController {
     );
     console.log(videoStreams);
     return { text: 'test' };
+  }
+
+  @Get('oneAiTest')
+  async oneAiTest() {
+    this.appService.oneAiStt();
   }
 }

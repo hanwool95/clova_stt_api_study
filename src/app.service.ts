@@ -5,12 +5,20 @@ import Ffmpeg from 'fluent-ffmpeg';
 import ffmpegPath from 'ffmpeg-static';
 import * as stream from 'stream';
 import OneAI from 'oneai';
+import path from 'path';
 
 @Injectable()
 export class AppService {
   private readonly clientId: string = process.env.CLIENT_ID;
   private readonly clientSecret: string = process.env.CLIENT_SECRET;
-  oneai = new OneAI(process.env.ONE_AI_KEY);
+  oneai = new OneAI(process.env.ONE_AI_KEY, {
+    multilingual: {
+      enabled: true,
+      allowed_input_languages: ['kr'],
+      expected_languages: ['kr'],
+      translate_output_to: 'kr',
+    },
+  });
 
   constructor(private httpService: HttpService) {}
 
@@ -33,12 +41,13 @@ export class AppService {
     }
   }
 
-  async oneAiStt() {
-    console.log('one Ai Stt');
-    const text =
-      'Whether to power translation to document summarization, enterprises are increasing their investments in natural language processing (NLP) technologies. According to a 2021 survey from John Snow Labs and Gradient Flow, 60% of tech leaders indicated that their NLP budgets grew by at least 10% compared to 2020, while a third said that spending climbed by more than 30%';
-    const pipeline = new this.oneai.Pipeline(this.oneai.skills.summarize());
-    pipeline.run(text).then(console.log);
+  async oneAiStt(pathUrl: string) {
+    const pipeline = new this.oneai.Pipeline(this.oneai.skills.transcribe());
+    const filePath = path.join(__dirname, '..', 'public', 'test.mp3');
+    return await pipeline
+      .runFile(filePath)
+      .then(console.log)
+      .catch(console.log);
   }
 
   getVideoStream = async (url: string) => {
@@ -71,5 +80,16 @@ export class AppService {
       .input(streamData)
       .toFormat(format)
       .pipe();
+  };
+
+  saveAudioStreamConvertedVideo = async (
+    streamData: stream.Readable,
+    format: string,
+  ) => {
+    return Ffmpeg()
+      .setFfmpegPath(ffmpegPath)
+      .input(streamData)
+      .toFormat(format)
+      .save(`/output.mp3`);
   };
 }

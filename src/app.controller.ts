@@ -45,6 +45,14 @@ export class AppController {
 
   @Get('oneAiTest')
   async oneAiTest() {
-    this.appService.oneAiStt();
+    this.appService.oneAiStt('');
+  }
+
+  @Post('saveAudioStream')
+  async saveAudioStream() {
+    const videoStream = await this.appService.getVideoStream(
+      process.env.TEST_VIDEO_URL,
+    );
+    this.appService.saveAudioStreamConvertedVideo(videoStream, 'mp3');
   }
 }

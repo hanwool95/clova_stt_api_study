@@ -6,6 +6,8 @@ import ffmpegPath from 'ffmpeg-static';
 import * as stream from 'stream';
 import OneAI from 'oneai';
 import path from 'path';
+import { promisify } from 'util';
+import { PassThrough } from 'stream';
 
 @Injectable()
 export class AppService {
@@ -91,5 +93,45 @@ export class AppService {
       .input(streamData)
       .toFormat(format)
       .save(`/output.mp3`);
+  };
+
+  convertAndSplitAudio = async (
+    streamData: stream.Readable,
+  ): Promise<Buffer[]> => {
+    const pipeline = promisify(stream.pipeline);
+    const buffers: Buffer[] = [];
+    let currentBuffer: Buffer[] = [];
+
+    const segmentSize = 10 * 1000; // 10 seconds in milliseconds
+    let segmentTimestamp = 0;
+
+    await pipeline(
+      streamData,
+      Ffmpeg().setFfmpegPath(ffmpegPath).toFormat('mp3').pipe(),
+      new stream.Writable({
+        write(chunk, encoding, callback) {
+          currentBuffer.push(chunk);
+          const totalLength = currentBuffer.reduce(
+            (acc, buf) => acc + buf.length,
+            0,
+          );
+
+          if (totalLength >= 10 * 1000) {
+            buffers.push(Buffer.concat(currentBuffer));
+            currentBuffer = [];
+          }
+
+          callback();
+        },
+        final(callback) {
+          if (currentBuffer.length > 0) {
+            buffers.push(Buffer.concat(currentBuffer));
+          }
+          callback();
+        },
+      }),
+    );
+
+    return buffers;
   };
 }

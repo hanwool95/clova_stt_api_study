@@ -35,17 +35,14 @@ export class AppController {
       process.env.TEST_VIDEO_URL,
     );
     console.log('divide VideoStream');
-    const videoStreams = await this.appService.convertVideoStreamToDividedAudio(
-      videoStream,
-      'mp3',
-    );
-    console.log(videoStreams);
+    const buffers = await this.appService.convertAndSplitAudio(videoStream);
+    console.log(buffers);
     return { text: 'test' };
   }
 
   @Get('oneAiTest')
   async oneAiTest() {
-    this.appService.oneAiStt('');
+    return this.appService.oneAiStt('test.mp3');
   }
 
   @Post('saveAudioStream')

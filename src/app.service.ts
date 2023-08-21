@@ -9,6 +9,7 @@ import path from 'path';
 import { promisify } from 'util';
 import { PassThrough } from 'stream';
 import fs from 'fs-extra';
+import { PrismaService } from './prisma/prisma.service';
 
 function generateRandomString(length: number = 8): string {
   const chars =
@@ -37,10 +38,12 @@ export class AppService {
     },
   });
 
-  constructor(private httpService: HttpService) {}
+  constructor(
+    private httpService: HttpService,
+    private prisma: PrismaService,
+  ) {}
 
   async naverStt(data): Promise<AxiosResponse<{ text: string }>> {
-    console.log('get stt');
     const url = 'https://naveropenapi.apigw.ntruss.com/recog/v1/stt?lang=Kor';
     const headers = {
       'Content-Type': 'application/octet-stream',
@@ -115,7 +118,7 @@ export class AppService {
     streamData: stream.Readable,
   ): Promise<Buffer[]> => {
     const outputPath = 'output';
-    const segmentDuration = 60;
+    const segmentDuration = 10;
     const randomString = generateRandomString(8);
 
     await new Promise<void>((resolve, reject) => {
@@ -151,5 +154,16 @@ export class AppService {
     }
 
     return outputFiles;
+  };
+
+  saveScript = async (contractId: number, text: string) => {
+    return await this.prisma.contract.update({
+      where: {
+        id: contractId,
+      },
+      data: {
+        script: text,
+      },
+    });
   };
 }

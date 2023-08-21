@@ -28,7 +28,7 @@ export class AppController {
     return this.appService.naverStt(audioStream);
   }
 
-  @Get('divideVideo')
+  @Post('divideVideo')
   async getVideoScriptWithDivided() {
     const videoStream = await this.appService.getVideoStream(
       process.env.TEST_VIDEO_URL,
@@ -40,7 +40,7 @@ export class AppController {
         return naverResponse['text'];
       }),
     );
-    return { text: texts.join(' ') };
+    return await this.appService.saveScript(1, texts.join(' '));
   }
 
   @Get('oneAiTest')

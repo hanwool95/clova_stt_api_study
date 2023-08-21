@@ -1,8 +1,9 @@
-import { Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { AppService } from './app.service';
 import { AxiosResponse } from 'axios';
 import path from 'path';
 import fs from 'fs';
+import { saveScriptDto } from './dto';
 
 @Controller()
 export class AppController {
@@ -29,7 +30,7 @@ export class AppController {
   }
 
   @Post('divideVideo')
-  async getVideoScriptWithDivided() {
+  async getVideoScriptWithDivided(@Body() dto: saveScriptDto) {
     const videoStream = await this.appService.getVideoStream(
       process.env.TEST_VIDEO_URL,
     );
@@ -40,7 +41,7 @@ export class AppController {
         return naverResponse['text'];
       }),
     );
-    return await this.appService.saveScript(1, texts.join(' '));
+    return await this.appService.saveScript(dto.id, texts.join(' '));
   }
 
   @Get('oneAiTest')

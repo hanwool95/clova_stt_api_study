@@ -118,7 +118,7 @@ export class AppService {
     streamData: stream.Readable,
   ): Promise<Buffer[]> => {
     const outputPath = 'output';
-    const segmentDuration = 10;
+    const segmentDuration = 60;
     const randomString = generateRandomString(8);
 
     await new Promise<void>((resolve, reject) => {

@@ -10,6 +10,19 @@ import { promisify } from 'util';
 import { PassThrough } from 'stream';
 import fs from 'fs-extra';
 
+function generateRandomString(length: number = 8): string {
+  const chars =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * chars.length);
+    result += chars.charAt(randomIndex);
+  }
+
+  return result;
+}
+
 @Injectable()
 export class AppService {
   private readonly clientId: string = process.env.CLIENT_ID;
@@ -102,6 +115,7 @@ export class AppService {
   ): Promise<Buffer[]> => {
     const outputPath = 'output';
     const segmentDuration = 60;
+    const randomString = generateRandomString(8);
 
     await new Promise<void>((resolve, reject) => {
       let segmentNumber = 0;
@@ -115,7 +129,7 @@ export class AppService {
           `-reset_timestamps 1`,
           `-map 0:a`, // 비디오에서 오디오 스트림만 추출
         ])
-        .save(`${outputPath}/output_%03d.mp3`)
+        .save(`${outputPath}/${randomString}_%03d.mp3`)
         .on('end', resolve)
         .on('error', reject)
         .on('progress', (progress) => {
@@ -128,10 +142,10 @@ export class AppService {
     const outputFiles = [];
     const outputDirFiles = await fs.readdir(outputPath);
     for (const file of outputDirFiles) {
-      if (file.startsWith('output_')) {
+      if (file.startsWith(`${randomString}_`)) {
         const fileBuffer = await fs.readFile(path.join(outputPath, file));
         outputFiles.push(fileBuffer);
-        fs.remove(path.join(outputPath, file));
+        await fs.remove(path.join(outputPath, file));
       }
     }
 

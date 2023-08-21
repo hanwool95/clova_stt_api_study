@@ -27,6 +27,7 @@ function generateRandomString(length: number = 8): string {
 export class AppService {
   private readonly clientId: string = process.env.CLIENT_ID;
   private readonly clientSecret: string = process.env.CLIENT_SECRET;
+
   oneai = new OneAI(process.env.ONE_AI_KEY, {
     multilingual: {
       enabled: true,

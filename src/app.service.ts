@@ -131,8 +131,10 @@ export class AppService {
       if (file.startsWith('output_')) {
         const fileBuffer = await fs.readFile(path.join(outputPath, file));
         outputFiles.push(fileBuffer);
+        fs.remove(path.join(outputPath, file));
       }
     }
+
     return outputFiles;
   };
 }

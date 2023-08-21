@@ -8,6 +8,7 @@ import OneAI from 'oneai';
 import path from 'path';
 import { promisify } from 'util';
 import { PassThrough } from 'stream';
+import fs from 'fs-extra';
 
 @Injectable()
 export class AppService {
@@ -37,6 +38,7 @@ export class AppService {
       const response = await this.httpService
         .post(url, data, { headers })
         .toPromise();
+      console.log(response.data);
       return response.data;
     } catch (error) {
       throw new Error(`Error in STT Service: ${error.message}`);
@@ -98,40 +100,39 @@ export class AppService {
   convertAndSplitAudio = async (
     streamData: stream.Readable,
   ): Promise<Buffer[]> => {
-    const pipeline = promisify(stream.pipeline);
-    const buffers: Buffer[] = [];
-    let currentBuffer: Buffer[] = [];
+    const outputPath = 'output';
+    const segmentDuration = 60;
 
-    const segmentSize = 10 * 1000; // 10 seconds in milliseconds
-    let segmentTimestamp = 0;
-
-    await pipeline(
-      streamData,
-      Ffmpeg().setFfmpegPath(ffmpegPath).toFormat('mp3').pipe(),
-      new stream.Writable({
-        write(chunk, encoding, callback) {
-          currentBuffer.push(chunk);
-          const totalLength = currentBuffer.reduce(
-            (acc, buf) => acc + buf.length,
-            0,
-          );
-
-          if (totalLength >= 10 * 1000) {
-            buffers.push(Buffer.concat(currentBuffer));
-            currentBuffer = [];
+    await new Promise<void>((resolve, reject) => {
+      let segmentNumber = 0;
+      Ffmpeg()
+        .setFfmpegPath(ffmpegPath)
+        .input(streamData)
+        .toFormat('mp3')
+        .outputOptions([
+          `-f segment`,
+          `-segment_time ${segmentDuration}`,
+          `-reset_timestamps 1`,
+          `-map 0:a`, // 비디오에서 오디오 스트림만 추출
+        ])
+        .save(`${outputPath}/output_%03d.mp3`)
+        .on('end', resolve)
+        .on('error', reject)
+        .on('progress', (progress) => {
+          if (progress.percent > segmentNumber * (100 / segmentDuration)) {
+            segmentNumber++;
+            console.log(`Segment ${segmentNumber} processed`);
           }
-
-          callback();
-        },
-        final(callback) {
-          if (currentBuffer.length > 0) {
-            buffers.push(Buffer.concat(currentBuffer));
-          }
-          callback();
-        },
-      }),
-    );
-
-    return buffers;
+        });
+    });
+    const outputFiles = [];
+    const outputDirFiles = await fs.readdir(outputPath);
+    for (const file of outputDirFiles) {
+      if (file.startsWith('output_')) {
+        const fileBuffer = await fs.readFile(path.join(outputPath, file));
+        outputFiles.push(fileBuffer);
+      }
+    }
+    return outputFiles;
   };
 }

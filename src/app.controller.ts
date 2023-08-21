@@ -30,14 +30,16 @@ export class AppController {
 
   @Get('divideVideo')
   async getVideoScriptWithDivided() {
-    console.log('get videoStream');
     const videoStream = await this.appService.getVideoStream(
       process.env.TEST_VIDEO_URL,
     );
-    console.log('divide VideoStream');
     const buffers = await this.appService.convertAndSplitAudio(videoStream);
-    console.log(buffers);
-    return { text: 'test' };
+    const texts = await Promise.all(
+      buffers.map(async (buffer) => {
+        return await this.appService.naverStt(buffer);
+      }),
+    );
+    return texts;
   }
 
   @Get('oneAiTest')

@@ -36,10 +36,11 @@ export class AppController {
     const buffers = await this.appService.convertAndSplitAudio(videoStream);
     const texts = await Promise.all(
       buffers.map(async (buffer) => {
-        return await this.appService.naverStt(buffer);
+        const naverResponse = await this.appService.naverStt(buffer);
+        return naverResponse['text'];
       }),
     );
-    return texts;
+    return { text: texts.join(' ') };
   }
 
   @Get('oneAiTest')
